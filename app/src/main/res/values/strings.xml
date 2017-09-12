@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">HKVideoPlayer</string>
+    <string name="check_connection">Check internet connection</string>
+</resources>
