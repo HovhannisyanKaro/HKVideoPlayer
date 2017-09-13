@@ -18,7 +18,12 @@ public class HttpClient {
 
     private static AsyncHttpClient client = new AsyncHttpClient();
 
+    {
+    }
+
     public static void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
+        //client.setTimeout(30000);
+
         Context context1 = ViewController.getViewController().getContext();
         client.get(context1, getAbsoluteUrl(url), params, responseHandler);
     }

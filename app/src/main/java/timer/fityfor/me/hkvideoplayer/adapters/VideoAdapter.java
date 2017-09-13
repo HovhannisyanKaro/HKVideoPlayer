@@ -7,6 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.Collections;
+import java.util.List;
+
 import timer.fityfor.me.hkvideoplayer.R;
 import timer.fityfor.me.hkvideoplayer.controllers.DataController;
 import timer.fityfor.me.hkvideoplayer.controllers.ViewController;
@@ -22,17 +25,17 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.MyViewHolder
 
     private Context context;
     private LayoutInflater inflater;
-    private MyList<MyVideo> videos;
+    private List<MyVideo> videos = Collections.emptyList();
     private RecyclerViewOnItemClicked recyclerViewOnItemClicked;
 
-    public VideoAdapter(RecyclerViewOnItemClicked recyclerViewOnItemClicked) {
-        context = ViewController.getViewController().getContext();
+    public VideoAdapter(Context context, RecyclerViewOnItemClicked recyclerViewOnItemClicked) {
+        this.context = context;
         inflater = LayoutInflater.from(context);
         this.recyclerViewOnItemClicked = recyclerViewOnItemClicked;
-        setData();
     }
 
-    public void setData() {
+    public void setData()
+    {
         videos = DataController.getInstance().getVideosData();
     }
 

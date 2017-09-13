@@ -15,6 +15,7 @@ public class ViewController {
 
     private static ViewController viewController = null;
     private MainActivity mainActivity;
+    private Activity context;
 
     public static ViewController getViewController() {
         if (viewController == null) {
@@ -22,8 +23,6 @@ public class ViewController {
         }
         return viewController;
     }
-
-    private Activity context;
 
     public Activity getContext() {
         return context;

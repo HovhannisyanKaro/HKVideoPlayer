@@ -1,10 +1,14 @@
 package timer.fityfor.me.hkvideoplayer;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -31,8 +35,9 @@ import timer.fityfor.me.hkvideoplayer.interfaces.RecyclerViewOnItemClicked;
 
 import static timer.fityfor.me.hkvideoplayer.api.HttpClient.BASE_URL;
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewOnItemClicked {
+public class MainActivity extends AppCompatActivity implements RecyclerViewOnItemClicked, MediaPlayer.OnCompletionListener, View.OnClickListener {
 
+    private static final int REQUEST_CODE = 1;
     @BindView(R.id.video_view)
     VideoView videoView;
     @BindView(R.id.recycler_view)
@@ -46,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewOnIte
     private boolean isVideoVisible = false;
     private int nextTrack;
     private int stopPosition;
+    private MyList<MyVideo> videos;
 
 
     @Override
@@ -53,18 +59,37 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewOnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        checkPer();
         getVideos();
+        initAdaoter();
         initListeners();
         initMediaController();
     }
 
-    private void initListeners() {
-        llVideoLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showVolumeControl();
+    private void checkPer(){
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                //File write logic here
+
+            }else{
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
             }
-        });
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
+        }else{
+            finish();
+        }
+    }
+
+    private void initListeners() {
+        videoView.setOnCompletionListener(this);
+
+        llVideoLayout.setOnClickListener(this);
     }
 
     private void showVolumeControl() {
@@ -115,34 +140,27 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewOnIte
         videoView.setMediaController(mediaController);
     }
 
-    private void setAdapter() {
-        adapter = new VideoAdapter(this);
+    private void initAdaoter() {
+        adapter = new VideoAdapter(this, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setAdapter() {
+        adapter.setData();
     }
 
     private void playVideo(int position) {
         new DownloadVideo().execute(DataController.getInstance().getVideosData().get(position).getVideoUrl());
 
-        final MyList<MyVideo> videos = DataController.getInstance().getVideosData();
+        videos = DataController.getInstance().getVideosData();
         HttpProxyCacheServer proxy = MyApplication.getProxy(this);
         String proxyUrl = proxy.getProxyUrl(BASE_URL + videos.get(position).getVideoUrl());
         videoView.setVideoPath(proxyUrl);
         videoView.start();
         nextTrack = position;
 
-        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                nextTrack++;
-                if (videos.size() - 1 >= nextTrack) {
-                    playVideo(nextTrack);
-                } else {
-                    closeVideo();
-                    getVideos();
-                }
-            }
-        });
+
     }
 
     @Override
@@ -170,6 +188,32 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewOnIte
             closeVideo();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        if (videos != null) {
+            nextTrack++;
+            if (videos.size() - 1 >= nextTrack) {
+                playVideo(nextTrack);
+            } else {
+                closeVideo();
+                getVideos();
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        showVolumeControl();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (videoView != null) {
+            videoView = null;
         }
     }
 }
